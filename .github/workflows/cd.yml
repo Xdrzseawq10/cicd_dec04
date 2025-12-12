@@ -1,12 +1,13 @@
-name: CI
+name: CD
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
+    types: [closed]
+    branches: [ master ]
 
 jobs:
   run-tests:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'development'
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -34,13 +35,13 @@ jobs:
             --cov=. \
             --cov-report=term \
             --cov-report=xml \
-            --cov-report=html \
+            --cov-report=html
 
       - name: Prepare the webpage
         run: |
-          mkdir sites
-          mv htmlcov sites/
-          mv coverage.xml sites/
+          mkdir -p sites/htmlcov
+          cp -r htmlcov/* sites/htmlcov/
+          cp coverage.xml sites/
 
       - name: upload the artifacts
         uses: actions/upload-pages-artifact@v4
@@ -49,12 +50,12 @@ jobs:
 
   Deploy:
     needs: run-tests
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'development'
     runs-on: ubuntu-latest
     permissions:
       pages: write
       id-token: write
+
     steps:
       - name: deploy the artifacts
         uses: actions/deploy-pages@v4
-    
-    
